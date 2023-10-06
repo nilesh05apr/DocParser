@@ -140,65 +140,68 @@ def main():
         save_uploaded_file(uploaded_file, "Data/")
         pdf_file = os.path.join("Data/", uploaded_file.name)
 
-    question = st.text_input("Hello there! What is your query today?")
+    
     if st.button("Retrieve"):
-        if question:
-            retriever = Retrive(pdf_file)
+      retriever = Retrive(pdf_file)
+      # Create a DataFrame to store the data
+      data = {
+            "Field": [
+              "Field",
+                "Settlement Date",
+                "Land Status",
+                "Price",
+                "Improvements",
+                "Inclusions",
+                "Exclusions",
+                "Land Tax"
+            ],
+            "Value": [
+              "Value",
+                retriever.getSettlementdate(),
+                retriever.getLandstatus(),
+                retriever.getPrice(),
+                retriever.getImprovments(),
+                retriever.getInclusions(),
+                retriever.getExclusions(),
+                retriever.getLandtax()
+            ]
+      }
 
-            # Create a DataFrame to store the data
-            data = {
-                "Field": [
-                  "Field",
-                    "Settlement Date",
-                    "Land Status",
-                    "Price",
-                    "Improvements",
-                    "Inclusions",
-                    "Exclusions",
-                    "Land Tax"
-                ],
-                "Value": [
-                  "Value",
-                    retriever.getSettlementdate(),
-                    retriever.getLandstatus(),
-                    retriever.getPrice(),
-                    retriever.getImprovments(),
-                    retriever.getInclusions(),
-                    retriever.getExclusions(),
-                    retriever.getLandtax()
-                ]
-            }
+      df = pd.DataFrame(data)
 
-            df = pd.DataFrame(data)
+      # Save data to Excel file
+      excel_file = "output.xlsx"
+      df.to_excel(excel_file, index=False, header=False)
 
-            # Save data to Excel file
-            excel_file = "output.xlsx"
-            df.to_excel(excel_file, index=False, header=False)
+      # Create a Word document
+      doc = Document()
+      doc.add_heading("Information Retrieved from PDF", 0)
+      doc.add_paragraph("Vendor's Name: " + retriever.getName())
+      doc.add_paragraph("Land Address: " + retriever.getLandaddress())
+      doc.add_paragraph("Plan Details: " + retriever.getPlandetails())
 
-            # Create a Word document
-            doc = Document()
-            doc.add_heading("Information Retrieved from PDF", 0)
-            doc.add_paragraph("Vendor's Name: " + retriever.getName())
-            doc.add_paragraph("Land Address: " + retriever.getLandaddress())
-            doc.add_paragraph("Plan Details: " + retriever.getPlandetails())
+      # Read the Excel file and add data to the Word document
+      df = pd.read_excel(excel_file)
+      table = doc.add_table(rows=0, cols=2)
+      table.style = 'Table Grid'
+      table.alignment = WD_ALIGN_VERTICAL.CENTER
 
-            # Read the Excel file and add data to the Word document
-            df = pd.read_excel(excel_file)
-            table = doc.add_table(rows=0, cols=2)
-            table.style = 'Table Grid'
-            table.alignment = WD_ALIGN_VERTICAL.CENTER
+      for index, row in df.iterrows():
+          row_cells = table.add_row().cells
+          row_cells[0].text = row["Field"]
+          row_cells[1].text = str(row["Value"])
 
-            for index, row in df.iterrows():
-                row_cells = table.add_row().cells
-                row_cells[0].text = row["Field"]
-                row_cells[1].text = str(row["Value"])
+      # Save the Word document
+      output_docx_file = uploaded_file.name or "output.docx"  
+      doc.save(output_docx_file)
 
-            # Save the Word document
-            output_docx_file = "output.docx"
-            doc.save(output_docx_file)
-
-            # Provide a link to download the generated Word document
-            st.markdown(f"**[Download Word Document](/{output_docx_file})**")
+      # Provide a link to download the generated Word document
+      # st.markdown(f"**[Download Word Document](/{output_docx_file})**")
+      st.download_button(
+          label="Download Word Document",
+          data=output_docx_file,
+          file_name=output_docx_file,
+        )
 
 if __name__ == "__main__":
     main()
