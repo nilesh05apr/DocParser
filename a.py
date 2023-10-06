@@ -192,7 +192,7 @@ def main():
           row_cells[1].text = str(row["Value"])
 
       # Save the Word document
-      output_docx_file = uploaded_file.name or "output.docx"  
+      output_docx_file = str(uploaded_file.name).replace(".pdf", ".docx")  
       doc.save(output_docx_file)
 
       # Provide a link to download the generated Word document
