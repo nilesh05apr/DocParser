@@ -1,0 +1,6 @@
+streamlit
+langchain
+python-docx
+pypdf
+openpyxl
+pandas
