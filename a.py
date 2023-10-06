@@ -12,7 +12,10 @@ from langchain.document_loaders import PyPDFLoader
 
 class Retrive:
   def __init__(self, filepath):
-    loader = PyPDFLoader(filepath)
+    try:
+      loader = PyPDFLoader(filepath)
+    except:
+      st.write("Error: Cannot load the file")
     pages = loader.load_and_split()
     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
     context = "\n\n".join(str(p.page_content) for p in pages)
