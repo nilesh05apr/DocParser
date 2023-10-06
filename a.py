@@ -146,7 +146,10 @@ def main():
 
     
     if st.button("Retrieve"):
-      retriever = Retrive(pdf_file)
+      try:
+        retriever = Retrive(pdf_file)
+      except:
+        st.write("Error: Cannot load the file")
       # Create a DataFrame to store the data
       data = {
             "Field": [
