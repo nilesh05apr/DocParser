@@ -120,6 +120,7 @@ def save_uploaded_file(uploaded_file, folder_path):
 import streamlit as st
 
 import os
+import io
 from docx import Document
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
@@ -195,12 +196,15 @@ def main():
       output_docx_file = str(uploaded_file.name).replace(".pdf", ".docx")  
       doc.save(output_docx_file)
 
+      bio = io.BytesIO()
+      doc.save(bio)
       # Provide a link to download the generated Word document
       # st.markdown(f"**[Download Word Document](/{output_docx_file})**")
       st.download_button(
           label="Download Word Document",
-          data=output_docx_file,
+          data=bio.getvalue(),
           file_name=output_docx_file,
+          mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
 
 if __name__ == "__main__":
