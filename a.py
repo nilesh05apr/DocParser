@@ -8,7 +8,7 @@ from langchain.chains.summarize import load_summarize_chain
 from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.document_loaders import PyPDFLoader
-
+from .parser import IRetrive
 
 class Retrive:
   def __init__(self, filepath):
@@ -147,7 +147,7 @@ def main():
     
     if st.button("Retrieve"):
       try:
-        retriever = Retrive(pdf_file)
+        retriever = IRetrive(pdf_file)
       except:
         st.write("Error: Cannot load the file")
       # Create a DataFrame to store the data
