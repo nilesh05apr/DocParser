@@ -70,7 +70,8 @@ class IRetrive:
     dc['purchaser’s solicitor    ']=matches_b
     dc['vendor  '] = matches_v[0].split('\n')
     dc[keys[1]] = dc[keys[1]][0] #date of completion
-    dc['VACANT POSSESSION'] = dc['VACANT POSSESSION'][:-2]
+    # print(dc['VACANT POSSESSION'])
+    # dc['VACANT POSSESSION'] = dc['VACANT POSSESSION'][:-2]
     #dc[keys[5]] = dc[keys[5]][-2]
     dc['improvements'] = dc['improvements'][0:2]
     dc['land (address']=extracted_text
@@ -118,6 +119,7 @@ class IRetrive:
     return matches[0]
 
   def getImprovments(self):
+
     selected_options = re.findall(r'\uf0fe\s*([^☐\uf0fe]+)', self.dc['improvements'][0])
 
     if len(selected_options) == 0:
@@ -139,7 +141,7 @@ class IRetrive:
     return "Inclusions are not marked under the inclusion tab of the contract"
 
   def getExclusions(self):
-    exc = self.dc['exclusions'].split('exclusions')[1]
+    exc = self.dc['exclusions'].split('exclusions')[-1]
     return exc
 
   def getLandtax(self):
