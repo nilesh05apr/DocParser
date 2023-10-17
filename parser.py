@@ -25,6 +25,7 @@ class IRetrive:
     sents = st.split("\n")
     import re
     pattern = r'land\s*\(\s*Address\s*,\s*plan\s*details\s*and\s*title\s*reference\s*\)'
+    
     extracted_text=[]
 
 # The string to search in (including variations)
