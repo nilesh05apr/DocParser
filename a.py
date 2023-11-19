@@ -17,6 +17,73 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 import pandas as pd
 from docx import Document
 from docx.enum.table import WD_ALIGN_VERTICAL
+import os
+import openai
+from openai import OpenAI
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import ElasticVectorSearch, Pinecone, Weaviate, FAISS
+
+from langchain.chains.question_answering import load_qa_chain
+from langchain.llms import OpenAI
+from langchain.prompts import PromptTemplate
+
+
+#os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = "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"
+api_key = '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'
+
+
+
+embeddings = OpenAIEmbeddings()
+text_splitter = CharacterTextSplitter(
+  separator="\n",
+  chunk_size=1000,
+  chunk_overlap=200,
+  length_function=len,
+)
+
+
+
+
+
+def ask_gpt(text, question):
+    """
+    Asks a question from the provided text using GPT-3.5.
+
+    Args:
+    text (str): The extracted text from the PDF.
+    question (str): The question to ask.
+
+    Returns:
+    str: The answer from GPT-3.5.
+    """
+    #openai.api_key = api_key
+    client = OpenAI()
+    texts = text_splitter.split_text(text)
+    docsearch = FAISS.from_texts(texts, embeddings)
+    docs = docsearch.similarity_search(question)
+    print(len(docs))
+    response = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a helpful assistant. From the provided docs answer the queries in newly seperated lines."
+            },
+            {
+                "role": "user",
+                "content": f"Text: {docs}"
+            },
+            {
+                "role": "user",
+                "content": f"Question: {question}"
+            }
+        ]
+    )
+    print(response)
+
+    return response
 
 
 class Retrive:
@@ -32,8 +99,16 @@ class Retrive:
       st += i
     self.st=st
 
+    question = "From the given text find out land address, land tax, settlement date, land status and plan detials."
+    answer = ask_gpt(st, question)
+    answer=answer.choices[0].message.content.split('\n')
+    #dict_keys(['Land address', 'Land tax', 'Settlement date', 'Land status', 'Plan details'])
+    property_info = {}
+    for item in k:
+        key, value = map(str.strip, item.split(':', 1))
+        property_info[key] = value
     sents = st.split("\n")
-    keys = ['vendor ','date for completion', 'land (address', 'plan details and', 'VACANT',"purchaser",'improvements','inclusion','exclusions','Land tax']
+    keys = ['vendor ',"purchaser",'improvements','inclusion','exclusions']
 
     dc = {}
     for item in keys:
@@ -46,29 +121,29 @@ class Retrive:
 # Now, dc will only contain values for keys based on the first occurrence in sentences.
 
 
-    dc[keys[0]] = dc[keys[0]][0] #vendor's name
-    dc[keys[1]] = dc[keys[1]][0] #date of completion
-    dc['VACANT'] = dc['VACANT'][:-2]
-    dc[keys[5]] = dc[keys[5]][-2]
+    dc['vendor '] = dc['vendor '][0] #vendor's name
+    dc['Settlement date'] = property_info["Settlement date"] #date of completion
+    dc['Land status'] = property_info['Land status']
     dc['improvements'] = dc['improvements'][0:2]
-    dc['land (address']=dc['land (address'][2:4]
+    #dc['land (address']=dc['land (address'][2:4]
     dc['exclusions']=dc['exclusions'][0]
     dc['Land tax']=dc['Land tax'][0]
 
     self.dc = dc
+    self.property_info=property_info
 
 
   def getName(self):
     return self.dc['vendor '].split(' ',1)[1]
 
   def getLandaddress(self):
-    return self.dc['land (address'][0].split(')',1)[1]
+    return self.property_info['Land address']
 
   def getPlandetails(self):
-    return self.dc['land (address'][1].split(':',1)[-1]
+    return self.property_info['Plan details']
 
   def getSettlementdate(self):
-    doc = self.dc['date for completion'].split('(',1)
+    doc = self.property_info['Settlement date']
     if len(doc) == 0:
       return "Need to be confirmed"
     return doc[0].split('date for completion')[1]
@@ -114,7 +189,7 @@ class Retrive:
     return exc
 
   def getLandtax(self):
-    ltx = re.findall(r'\uf0fe\s*([^☐\uf0fe]+)', self.dc['Land tax'])
+    ltx = self.property_info[ 'Land tax']
     if len(ltx) == 0:
       return "Land tax is not marked as adjustable or not adjustable"
     elif ltx[0].strip().lower() == 'no':
